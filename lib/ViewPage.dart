@@ -2,6 +2,9 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:project_dio_d3/Updatepage.dart';
+import 'package:project_dio_d3/insertpage.dart';
 
 class ViewPage extends StatefulWidget {
   const ViewPage({Key? key}) : super(key: key);
@@ -42,24 +45,115 @@ class _ViewPageState extends State<ViewPage> {
     return Scaffold(
         appBar: AppBar(
           title: Text("ALL ADDRESS"),
+          centerTitle: true,
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushReplacement(context, MaterialPageRoute(
+              builder: (context) {
+                return InsertPage();
+              },
+            ));
+          },
+          child: Text("Add"),
         ),
         body: status
             ? ListView.builder(
                 itemCount: m!.addressList!.length,
                 itemBuilder: (context, index) {
+                  int _index = m!.addressList!.length - index - 1;
                   return Stack(
                     alignment: Alignment.topRight,
                     children: [
                       Card(
                         elevation: 3,
                         child: ListTile(
+                          onTap: () {
+                            Navigator.pushReplacement(context,
+                                MaterialPageRoute(
+                              builder: (context) {
+                                return UpdatePage(m, _index);
+                              },
+                            ));
+                          },
                           title: Text(
-                              "Address :${m!.addressList![m!.addressList!.length - index - 1].addressId}"),
+                            "Address :${m!.addressList![_index].addressId}",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  "addressType :${m!.addressList![_index].addressType}"),
+                              Text(
+                                  "gps_address :${m!.addressList![_index].gpsAddress}"),
+                              Text(
+                                  "latitude :${m!.addressList![_index].latitude}"),
+                              Text(
+                                  "longitude :${m!.addressList![_index].longitude}"),
+                              Text("mobile :${m!.addressList![_index].mobile}"),
+                              Text("name :${m!.addressList![_index].name}"),
+                              Text(
+                                  "created :${m!.addressList![_index].created}"),
+                            ],
+                          ),
                         ),
                       ),
-                      IconButton(onPressed: () {
-
-                      }, icon: Icon(Icons.delete))
+                      IconButton(
+                          onPressed: () {
+                            showDialog(
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: Text("Delete"),
+                                    content: Text(
+                                        "Are you sure you want to delete Address"),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () async {
+                                            Navigator.pop(context);
+                                            String address_id =
+                                                "${m!.addressList![_index].addressId}";
+                                            var response = await Dio().get(
+                                                'http://workfordemo.in/bunch3/delete_address.php?address_id=$address_id');
+                                            Map map = jsonDecode(response.data);
+                                            int a = map['success'];
+                                            if (a == 1) {
+                                              Fluttertoast.showToast(
+                                                  msg: "Address deleted",
+                                                  toastLength:
+                                                      Toast.LENGTH_SHORT,
+                                                  gravity: ToastGravity.CENTER,
+                                                  timeInSecForIosWeb: 1,
+                                                  backgroundColor: Colors.black,
+                                                  textColor: Colors.white,
+                                                  fontSize: 16.0);
+                                              setState(() {
+                                                getData();
+                                              });
+                                            } else {
+                                              Fluttertoast.showToast(
+                                                  msg: "Address not deleted",
+                                                  toastLength:
+                                                      Toast.LENGTH_SHORT,
+                                                  gravity: ToastGravity.CENTER,
+                                                  timeInSecForIosWeb: 1,
+                                                  backgroundColor: Colors.black,
+                                                  textColor: Colors.white,
+                                                  fontSize: 16.0);
+                                            }
+                                          },
+                                          child: Text("Yes")),
+                                      TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text("No"))
+                                    ],
+                                  );
+                                },
+                                context: context);
+                          },
+                          icon: Icon(Icons.delete))
                     ],
                   );
                 },
